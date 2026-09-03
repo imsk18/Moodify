@@ -1,4 +1,5 @@
 const userModel = require("../models/userModel")
+const blockListModel = require("../models/balockList.model")
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
@@ -41,13 +42,65 @@ const userRegister = async(req,res)=>{
 }
 
 const userLogin = async(req,res)=>{
-    const {username,email} = req.body
+    const {username,email,password} = req.body
 
-    const isUserExist =
+    const user = await userModel.findOne({
+        $or:[
+            {email},
+            {username}
+        ]
+    }).select("+password")
+
+    if(!user){
+        return res.status(409).json({
+            message:"user not found"
+        })
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password,user.password)
+    if(!isPasswordMatch){
+        return res.status(401).json({
+            message:"invalid password"
+        })
+    }
+
+    const token = jwt.sign({
+        id:user._id
+    },process.env.JWT_SECRET)
+
+    res.cookie("token",token)
+
+    res.status(200).json({
+        message:"user loggin success",
+        token
+    })
 
 }
 
+const getMe = async(req,res)=>{
+    const user = await userModel.findById(req.user.id);
+
+    res.status(200).json({
+        message:"user fetched success",
+        user
+    })
+}
+
+const logOutUser = async(req,res)=>{
+    const token = req.cookies.token;
+    res.clearCookie("token");
+
+    await blockListModel.create({
+        token
+    })
+    res.status(201).json({
+        message:"user logOut success"
+    })
+}
 module.exports ={
-    userRegister
+    userRegister,
+    userLogin,
+    getMe,
+    logOutUser
 }
 
