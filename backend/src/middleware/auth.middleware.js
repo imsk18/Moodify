@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
-const blockListModel = require('../models/balockList.model')
+const blockListModel = require('../models/balockList.model');
+const redis = require('../config/cache')
 
 
 const authUser = async(req,res,next)=>{
@@ -12,12 +13,14 @@ try{
         })
     }
 
-    const isTokenBlockListed = await blockListModel.findOne(token);
-    if(isTokenBlockListed){
-        return res.status(401).json({
-            message:"invalid token"
-        })
-    }
+    // const isTokenBlockListed = await blockListModel.findOne(token);
+    // if(isTokenBlockListed){
+    //     return res.status(401).json({
+    //         message:"invalid token"
+    //     })
+    // }
+
+    
 
     const decoded = jwt.verify(token,process.env.JWT_SECRET);
     req.user = decoded;

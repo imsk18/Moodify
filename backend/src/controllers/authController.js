@@ -2,6 +2,7 @@ const userModel = require("../models/userModel")
 const blockListModel = require("../models/balockList.model")
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const redis= require('ioredis')
 
 const userRegister = async(req,res)=>{
     const {username,email,password} = req.body
@@ -90,9 +91,10 @@ const logOutUser = async(req,res)=>{
     const token = req.cookies.token;
     res.clearCookie("token");
 
-    await blockListModel.create({
-        token
-    })
+    // await blockListModel.create({
+    //     token
+    // })
+    await redis.set(token,Date.now().toString())
     res.status(201).json({
         message:"user logOut success"
     })
