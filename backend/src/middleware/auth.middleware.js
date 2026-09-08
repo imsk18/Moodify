@@ -13,12 +13,17 @@ try{
         })
     }
 
-    // const isTokenBlockListed = await blockListModel.findOne(token);
+    // const isTokenBlockListed = await blockListModel.findOne(token);    //using mongo db
     // if(isTokenBlockListed){
-    //     return res.status(401).json({
+    //     return res.status(401).json({              
     //         message:"invalid token"
     //     })
     // }
+
+
+    // now redis
+
+    const isTokenBlackListed = redis.get(`"blackList:"${token}`)
 
     
 

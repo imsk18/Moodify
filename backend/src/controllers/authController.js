@@ -2,7 +2,7 @@ const userModel = require("../models/userModel")
 const blockListModel = require("../models/balockList.model")
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const redis= require('ioredis')
+const redis= require('../config/cache')
 
 const userRegister = async(req,res)=>{
     const {username,email,password} = req.body
@@ -87,18 +87,37 @@ const getMe = async(req,res)=>{
     })
 }
 
-const logOutUser = async(req,res)=>{
-    const token = req.cookies.token;
-    res.clearCookie("token");
+const logOutUser = async (req, res) => {
+    try {
+        const token = req.cookies.token;
 
-    // await blockListModel.create({
-    //     token
-    // })
-    await redis.set(token,Date.now().toString())
-    res.status(201).json({
-        message:"user logOut success"
-    })
-}
+        if (!token) {
+            return res.status(401).json({
+                message: "token not provided"
+            });
+        }
+
+        await redis.set(
+            `blacklist:${token}`,
+            "true",
+            "EX",
+            7 * 24 * 60 * 60
+        );
+
+        res.clearCookie("token");
+
+        return res.status(200).json({
+            message: "user logout success"
+        });
+
+    } catch (err) {
+        console.log("Logout error:", err.message);
+
+        return res.status(500).json({
+            message: "logout failed"
+        });
+    }
+};
 module.exports ={
     userRegister,
     userLogin,
