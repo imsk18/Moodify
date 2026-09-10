@@ -6,7 +6,7 @@ import {
   detectFaceExpression,
   stopCamera,
   closeFaceLandmarker,
-} from "../utils/utils";
+} from "./utils/utils";
 
 
 const FaceExpression = () => {
