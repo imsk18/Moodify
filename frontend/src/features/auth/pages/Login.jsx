@@ -7,15 +7,27 @@ import { useAuth } from '../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 
 const Login = () => {
+
   const {loading , handleLogin} = useAuth()
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate()
+  
+    const navigate = useNavigate()
 
   async function handleSubmit(e){
     e.preventDefault()
-    await handleLogin(email,password);
-    navigate("/")
+    console.log("submmited");
+    try{
+      await handleLogin(email,password);
+    console.log("login1");
+     navigate("/")
+    }
+    catch(err){
+      console.log("login error",err);
+    }
+    
+   
     
 
   }
@@ -30,7 +42,6 @@ const Login = () => {
          value={email}
          onChange={(e)=> setEmail(e.target.value)}
           label="email" placeholder="email"/>
-
          <FormGroup
          value={password}
          onChange={(e)=>setPassword(e.target.value)}

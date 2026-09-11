@@ -71,10 +71,16 @@ const userLogin = async(req,res)=>{
 
     res.cookie("token",token)
 
-    res.status(200).json({
-        message:"user loggin success",
-        token
-    })
+   return res.status(200).json({
+    message: "user login success",
+    token,
+    user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        username: user.username
+    }
+});
 
 }
 
