@@ -12,22 +12,42 @@ const uploadSong = async(req,res)=>{
     const tags = id3.read(songBuffer);
     // console.log(tags);
 
-    const songFile = await storageService.uploadFile({
+
+    // const songFile = await storageService.uploadFile({
+    //     buffer:songBuffer,
+    //     filename:tags.title + ".mp3",
+    //     folder:"/Moodify/songs"
+    // });                                                         //⬆️ its take more time first upload songs then poster
+
+    // const posterFile = await storageService.uploadFile({
+    //     buffer:tags.image.imageBuffer,
+    //     filename:`${tags.title}.jpeg`,
+    //     folder:"/Moodify/posters"
+    // });
+
+      /*   its optimize fast */
+      const [songFile,posterFile] = await Promise.all([
+        
+        storageService.uploadFile({
         buffer:songBuffer,
         filename:tags.title + ".mp3",
         folder:"/Moodify/songs"
-    });
-
-    const posterFile = await storageService.uploadFile({
+    }),
+    
+    storageService.uploadFile({
         buffer:tags.image.imageBuffer,
         filename:`${tags.title}.jpeg`,
         folder:"/Moodify/posters"
-    });
+    })
+
+
+    ])
 
     const song = await songsModel.create({
         title:tags.title,
         url:songFile.url,
-        posterUrl:posterFile.url
+        posterUrl:posterFile.url,
+        mood
     })
 
     res.status(201).json({
@@ -45,4 +65,48 @@ const uploadSong = async(req,res)=>{
 
 
 }
-module.exports = {uploadSong}
+
+// const getSong = async (req,res)=>{
+//     const { mood } = req.body
+
+//     const song = await songsModel.findOne({
+//         mood
+//     })
+
+//     res.status(200).json({
+//         message:"song fetched successfully",
+//         song
+//     })
+
+
+// }
+
+const getSong = async (req, res) => {
+    try {
+        // const { mood } = req.params;
+        const { mood } = req.query;
+
+        const songs = await songsModel.find({ mood });
+
+        if (!songs.length) {
+            return res.status(404).json({
+                message: "No songs found for this mood"
+            });
+        }
+
+        res.status(200).json({
+            message: "Songs fetched successfully",
+            songs
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to fetch songs",
+            error: error.message
+        });
+    }
+};
+module.exports = {
+    uploadSong,
+    getSong
+}
