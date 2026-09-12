@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   initializeFaceLandmarker,
@@ -9,7 +9,7 @@ import {
 } from "./utils/utils";
 
 
-const FaceExpression = () => {
+const FaceExpression = ({ onDetected }) => {
   // --------------------------------
   // Refs
   // --------------------------------
@@ -28,14 +28,43 @@ const FaceExpression = () => {
 
   const [loading, setLoading] =
     useState(true);
+  const [cameraActive, setCameraActive] =
+    useState(false);
+
+  const activateCamera = useCallback(async () => {
+    try {
+      setLoading(true);
+      const stream = await startCamera();
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+
+      setCameraActive(true);
+      setLoading(false);
+      return true;
+    } catch (error) {
+      console.error("Camera restart error:", error);
+      setLoading(false);
+      setExpression(error.name === "NotAllowedError" ? "Camera permission is required" : "Camera is unavailable");
+      return false;
+    }
+  }, []);
 
 
   // --------------------------------
   // Detect Face - Button
   // --------------------------------
 
-  const detectFace = () => {
+  const detectFace = async () => {
     try {
+      if (!cameraActive) {
+        const restarted = await activateCamera();
+        if (!restarted) return;
+      }
+
       const result =
         detectFaceExpression(
           landmarkerRef.current,
@@ -43,6 +72,20 @@ const FaceExpression = () => {
         );
 
       setExpression(result.expression);
+
+      const normalizedExpression = result.expression.toLowerCase();
+      const mood = ["happy", "sad", "surprised"].find((supportedMood) =>
+        normalizedExpression.includes(supportedMood)
+      ) || "";
+
+      const songsFetched = await onDetected?.({ expression: result.expression, mood, detected: result.detected });
+
+      if (songsFetched === true) {
+        stopCamera(streamRef.current);
+        streamRef.current = null;
+        setCameraActive(false);
+        if (videoRef.current) videoRef.current.srcObject = null;
+      }
 
       console.log(
         "Detected Expression:",
@@ -56,93 +99,35 @@ const FaceExpression = () => {
       );
 
       setExpression("Detection error");
+      onDetected?.({ expression: "Detection error", mood: "", detected: false });
     }
   };
 
 
   // --------------------------------
-  // Initialize
-  // --------------------------------
 
   useEffect(() => {
     let mounted = true;
 
-
     const initialize = async () => {
       try {
         setLoading(true);
-
-
-        // Initialize MediaPipe
-        const landmarker =
-          await initializeFaceLandmarker();
-
+        const landmarker = await initializeFaceLandmarker();
 
         if (!mounted) {
-          closeFaceLandmarker(
-            landmarker
-          );
-
+          closeFaceLandmarker(landmarker);
           return;
         }
 
-
-        landmarkerRef.current =
-          landmarker;
-
-
-        // Start Camera
-        const stream =
-          await startCamera();
-
-
-        if (!mounted) {
-          stopCamera(stream);
-
-          closeFaceLandmarker(
-            landmarker
-          );
-
-          return;
-        }
-
-
-        streamRef.current =
-          stream;
-
-
-        // Attach camera to video
-        if (videoRef.current) {
-          videoRef.current.srcObject =
-            stream;
-
-          await videoRef.current.play();
-        }
-
-
+        landmarkerRef.current = landmarker;
         setLoading(false);
-
-
-        console.log("Camera ready");
-
-        console.log(
-          "Face Landmarker ready"
-        );
-
+        console.log("Face Landmarker ready");
       } catch (error) {
-        console.error(
-          "Initialization error:",
-          error
-        );
-
+        console.error("Initialization error:", error);
         setLoading(false);
-
-        setExpression(
-          "❌ Camera initialization failed"
-        );
+        setExpression("❌ Face detector initialization failed");
       }
     };
-
 
     initialize();
 
@@ -171,7 +156,7 @@ const FaceExpression = () => {
       landmarkerRef.current = null;
     };
 
-  }, []);
+  }, [activateCamera]);
 
 
   // --------------------------------
@@ -239,7 +224,7 @@ const FaceExpression = () => {
             : "pointer",
         }}
       >
-        Detect Face Expression
+        {cameraActive ? "Detect Face Expression" : "Detect Again"}
       </button>
 
     </div>

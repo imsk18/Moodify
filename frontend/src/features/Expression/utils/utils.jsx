@@ -110,11 +110,8 @@ export const detectExpression = (blendshapes) => {
   // 😮 SURPRISED
   // ---------------------------------
 
-  if (
-    jawOpen > 0.35 &&
-    browInnerUp > 0.20
-  ) {
-    return "😮 Surprised";
+  if (jawOpen > 0.28 && browInnerUp > 0.14) {
+    return "surprised";
   }
 
 
@@ -122,10 +119,7 @@ export const detectExpression = (blendshapes) => {
   // 😠 ANGRY
   // ---------------------------------
 
-  if (
-    browDown > 0.25 &&
-    smile < 0.30
-  ) {
+  if (browDown > 0.25 && smile < 0.35) {
     return "😠 Angry";
   }
 
@@ -135,10 +129,10 @@ export const detectExpression = (blendshapes) => {
   // ---------------------------------
 
   if (
-    mouthFrown > 0.20 &&
-    browInnerUp > 0.15
+    (mouthFrown > 0.12 && browInnerUp > 0.10) ||
+    (browInnerUp > 0.28 && smile < 0.28)
   ) {
-    return "😢 Sad";
+    return "sad";
   }
 
 
@@ -146,10 +140,8 @@ export const detectExpression = (blendshapes) => {
   // 😊 HAPPY
   // ---------------------------------
 
-  if (
-    smile > 0.40
-  ) {
-    return "😊 Happy";
+  if (smile > 0.42 && jawOpen < 0.55 && mouthFrown < 0.12 && browDown < 0.25) {
+    return "happy";
   }
 
 
@@ -157,10 +149,7 @@ export const detectExpression = (blendshapes) => {
   // 😑 EYES CLOSED
   // ---------------------------------
 
-  if (
-    eyeBlinkLeft > 0.60 &&
-    eyeBlinkRight > 0.60
-  ) {
+  if (eyeBlinkLeft > 0.60 && eyeBlinkRight > 0.60) {
     return "😑 Eyes Closed";
   }
 
