@@ -69,7 +69,11 @@ const userLogin = async(req,res)=>{
         id:user._id
     },process.env.JWT_SECRET)
 
-    res.cookie("token",token)
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none"
+    });
 
    return res.status(200).json({
     message: "user login success",
